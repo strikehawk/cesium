@@ -1,4 +1,3 @@
-/*global define*/
 define([
         '../../Core/buildModuleUrl',
         '../../Core/Cartesian3',
@@ -180,7 +179,7 @@ define([
      * var widget = new Cesium.CesiumWidget('cesiumContainer', {
      *     imageryProvider : Cesium.createOpenStreetMapImageryProvider(),
      *     terrainProvider : new Cesium.CesiumTerrainProvider({
-     *         url : 'https://assets.agi.com/stk-terrain/world'
+     *         url : 'https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles'
      *     }),
      *     // Use high-res stars downloaded from https://github.com/AnalyticalGraphicsInc/cesium-assets
      *     skyBox : new Cesium.SkyBox({
@@ -242,6 +241,7 @@ define([
         this._canvas = canvas;
         this._canvasWidth = 0;
         this._canvasHeight = 0;
+        this._creditContainerContainer = creditContainerContainer;
         this._creditContainer = creditContainer;
         this._canRender = false;
         this._renderLoopRunning = false;
@@ -273,7 +273,12 @@ define([
             var ellipsoid = defaultValue(scene.mapProjection.ellipsoid, Ellipsoid.WGS84);
             var creditDisplay = scene.frameState.creditDisplay;
 
-            var cesiumCredit = new Credit('Cesium', cesiumLogoData, 'http://cesiumjs.org/');
+            var cesiumCredit = new Credit({
+                text: 'Cesium',
+                imageUrl: cesiumLogoData,
+                link: 'http://cesiumjs.org/',
+                showOnScreen: true
+            });
             creditDisplay.addDefaultCredit(cesiumCredit);
 
             var globe = options.globe;
@@ -650,6 +655,7 @@ define([
     CesiumWidget.prototype.destroy = function() {
         this._scene = this._scene && this._scene.destroy();
         this._container.removeChild(this._element);
+        this._creditContainerContainer.removeChild(this._creditContainer);
         destroyObject(this);
     };
 

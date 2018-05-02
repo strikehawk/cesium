@@ -157,6 +157,12 @@ define([
      *                 or undefined to show it at all levels.  Level zero is the least-detailed level.
      * @param {Number} [options.maximumTerrainLevel] The maximum terrain level-of-detail at which to show this imagery layer,
      *                 or undefined to show it at all levels.  Level zero is the least-detailed level.
+     * @param {Boolean} [options.extrapolateLowerLevelTiles=true] True if the layer should extrapolate missing lower level tiles from higher level ones.
+     *                  This may me necessary if {@link ImageryProvider} has <code>minimumLevel</code> superior to 0.
+     *                  False if the layer should not display if its ImageryProvider has no data for the target imagery level.
+     *
+     *                  Please note that depending of requested area and the minimum level value of the imagery provider, setting
+     *                  this value to true can cause the download of a large amount of tiles.
      */
     function ImageryLayer(imageryProvider, options) {
         this._imageryProvider = imageryProvider;
@@ -256,6 +262,19 @@ define([
          * @default true
          */
         this.show = defaultValue(options.show, true);
+
+        /**
+         * Determines if the layer should extrapolate missing lower level tiles from higher level ones.
+         * This may me necessary if {@link ImageryProvider} has <code>minimumLevel</code> superior to 0.
+         * False if the layer should not display if its ImageryProvider has no data for the target imagery level.
+         *
+         * Please note that depending of requested area and the minimum level value of the imagery provider, setting
+         * this value to true can cause the download of a large amount of tiles.
+         *
+         * @type {Boolean}
+         * @default true
+         */
+        this.extrapolateLowerLevelTiles = defaultValue(options.extrapolateLowerLevelTiles, true);
 
         this._minimumTerrainLevel = options.minimumTerrainLevel;
         this._maximumTerrainLevel = options.maximumTerrainLevel;
@@ -547,7 +566,13 @@ define([
         if (defined(imageryProvider.minimumLevel)) {
             var minimumLevel = imageryProvider.minimumLevel;
             if (imageryLevel < minimumLevel) {
-                imageryLevel = minimumLevel;
+                if (this.extrapolateLowerLevelTiles) {
+                    // If extrapolation is enabled, the tiles from 'minimumLevel' will be downloaded to compute tiles
+                    // unavailable from the imagery provider.
+                    imageryLevel = minimumLevel;
+                } else {
+                    return false;
+                }
             }
         }
 

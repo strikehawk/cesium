@@ -62,6 +62,7 @@ define([
      * @param {Number} [options.minimumLevel=0] The minimum level-of-detail supported by the imagery provider.
      * @param {Number} [options.maximumLevel] The maximum level-of-detail supported by the imagery provider, or undefined if there is no limit.
      * @param {Ellipsoid} [options.ellipsoid] The ellipsoid.  If not specified, the WGS84 ellipsoid is used.
+     * @param {TileDiscardPolicy} [options.tileDiscardPolicy] The tile discard policy.  If defined, the discard policy is responsible for filtering out "missing" tiles via its shouldDiscardImage function.  If this function returns undefined, no tiles are filtered.
      * @param {Credit|String} [options.credit] A credit for the data source, which is displayed on the canvas.
      * @param {String|String[]} [options.subdomains='abc'] The subdomains to use for the <code>{s}</code> placeholder in the URL template.
      *                          If this parameter is a single string, each character in the string is a subdomain.  If it is

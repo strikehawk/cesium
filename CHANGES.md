@@ -6,6 +6,7 @@ Change Log
 ##### Fixes :wrench:
 
 * Fixed a bug causing custom TilingScheme classes to not be able to use a GeographicProjection. [#6524](https://github.com/AnalyticalGraphicsInc/cesium/pull/6524)
+* Added `extrapolateLowerLevelTiles` to `ImageryLayer` to specify if unavailable tiles should be computed from higher level ones. [#4372](https://github.com/AnalyticalGraphicsInc/cesium/issues/4372)
 
 ### 1.45 - 2018-05-01
 

@@ -9,7 +9,7 @@ define([
     'use strict';
 
     var defaultTokenCredit;
-    var defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0NDViM2NkNi0xYTE2LTRlZTUtODBlNy05M2Q4ODg4M2NmMTQiLCJpZCI6MjU5LCJpYXQiOjE1MTgxOTc4MDh9.sld5jPORDf_lWavMEsugh6vHPnjR6j3qd1aBkQTswNM';
+    var defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3ODRkMGNmYS1iYmMwLTQ5MjgtYTYzOC1lYzMzNDk2YjIyMGUiLCJpZCI6MjU5LCJzY29wZXMiOlsiYXNyIiwiZ2MiXSwiaWF0IjoxNTQzODQ5NzQ1fQ.80vzOtxheq1XsMJOKrSRdh3ybJu1XttfE7P47UxGxpY';
 
     /**
      * Default settings for accessing the Cesium ion API.
@@ -54,7 +54,6 @@ define([
             You can sign up for a free ion account at <a href="https://cesium.com">https://cesium.com</a>.</b>';
 
             defaultTokenCredit = new Credit(defaultTokenMessage, true);
-            console.log(defaultTokenMessage);
         }
 
         return defaultTokenCredit;

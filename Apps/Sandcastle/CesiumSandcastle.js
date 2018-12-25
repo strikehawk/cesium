@@ -27,10 +27,10 @@ require({
         location: '../Apps/Sandcastle/ThirdParty'
     }]
 }, [
-        "dijit/Dialog",
-        "dijit/form/Button",
-        "dijit/form/Form",
-        "dijit/form/Textarea",
+        'dijit/Dialog',
+        'dijit/form/Button',
+        'dijit/form/Form',
+        'dijit/form/Textarea',
         'CodeMirror/lib/codemirror',
         'dijit/layout/ContentPane',
         'dijit/popup',
@@ -178,7 +178,9 @@ require({
     var searchTerm = '';
     var searchRegExp;
     var hintTimer;
-    var currentTab = '';
+    var defaultDemo = 'Hello World';
+    var defaultLabel = 'Showcases';
+    var currentTab = defaultLabel;
     var newDemo;
     var demoHtml = '';
     var demoCode = '';
@@ -547,10 +549,10 @@ require({
                '//Sandcastle_End\n' +
                '    Sandcastle.finishedLoading();\n' +
                '}\n' +
-               'if (typeof Cesium !== "undefined") {\n' +
+               'if (typeof Cesium !== \'undefined\') {\n' +
                '    startup(Cesium);\n' +
-               '} else if (typeof require === "function") {\n' +
-               '    require(["Cesium"], startup);\n' +
+               '} else if (typeof require === \'function\') {\n' +
+               '    require([\'Cesium\'], startup);\n' +
                '}\n';
     }
 
@@ -576,7 +578,6 @@ require({
         // Apply user HTML to bucket.
         var htmlElement = bucketDoc.createElement('div');
         htmlElement.innerHTML = htmlEditor.getValue();
-        bucketDoc.body.appendChild(htmlElement);
 
         var onScriptTagError = function() {
             if (bucketFrame.contentDocument === bucketDoc) {
@@ -623,7 +624,30 @@ require({
                 bucketDoc.body.appendChild(element);
             }
         };
-        loadScript();
+        // If we just add `htmlElement` to the DOM and run
+        // loadScript(), there's a chance it will inject CSS
+        // before the HTML content is fully loaded, leading to a broken page.
+        // So instead we create an observer instance to watch for when
+        // the element has been added.
+        // See https://github.com/AnalyticalGraphicsInc/cesium/issues/5265
+        var observer = new MutationObserver(function (mutationsList) {
+            // See https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver
+            var length = mutationsList.length;
+            for (var i = 0; i < length; i++) {
+                var mutation = mutationsList[i];
+                // Watch for an element with the data-sandcastle-loaded attribute.
+                if (defined(mutation.target.dataset) && mutation.target.dataset.sandcastleLoaded === 'yes') {
+                    loadScript();
+                    observer.disconnect();
+                }
+            }
+        });
+
+        // Start observing the target node for configured mutations
+        var config = { attributes: true, childList: true, subtree: true };
+        observer.observe(bucketDoc, config);
+
+        bucketDoc.body.appendChild(htmlElement);
     }
 
     function applyBucket() {
@@ -700,10 +724,10 @@ require({
         queryObject = ioQuery.queryToObject(window.location.search.substring(1));
     }
     if (!defined(queryObject.src)) {
-        queryObject.src = 'Hello World.html';
+        queryObject.src = defaultDemo + '.html';
     }
     if (!defined(queryObject.label)) {
-        queryObject.label = 'Showcases';
+        queryObject.label = defaultLabel;
     }
 
     function loadFromGallery(demo) {
@@ -947,7 +971,7 @@ require({
     });
 
     registry.byId('buttonImport').on('click', function() {
-        var gistId = document.getElementById("gistId").value;
+        var gistId = document.getElementById('gistId').value;
         var gistParameter = '&gist=';
         var gistIndex = gistId.indexOf(gistParameter);
         if (gistIndex !== -1) {
@@ -955,6 +979,18 @@ require({
         }
         window.location.href = getBaseUrl() + '?gist=' + gistId;
     });
+
+    function getPushStateUrl(demo) {
+        var obj = {};
+        if (demo.name !== defaultDemo) {
+            obj.src = demo.name + '.html';
+        }
+        if (currentTab !== defaultLabel) {
+            obj.label = currentTab;
+        }
+        var query = ioQuery.objectToQuery(obj);
+        return query === '' ? query : '?' + query;
+    }
 
     registry.byId('buttonNew').on('click', function() {
         var htmlText = (htmlEditor.getValue()).replace(/\s/g, '');
@@ -964,17 +1000,8 @@ require({
             confirmChange = window.confirm('You have unsaved changes. Are you sure you want to navigate away from this demo?');
         }
         if (confirmChange) {
+            window.history.pushState(newDemo, newDemo.name, getPushStateUrl(newDemo));
             loadFromGallery(newDemo).then(function() {
-                var demoSrc = newDemo.name + '.html';
-                var queries = window.location.search.substring(1).split('&');
-                for (var i = 0; i < queries.length; i++) {
-                    var key = queries[i].split('=')[0];
-                    if (key === "src") {
-                        if (demoSrc !== queries[i].split('=')[1].replace('%20', ' ')) {
-                            window.history.pushState(newDemo, newDemo.name, '?src=' + demoSrc + '&label=' + currentTab);
-                        }
-                    }
-                }
                 document.title = newDemo.name + ' - Cesium Sandcastle';
             });
         }
@@ -1068,13 +1095,12 @@ require({
 
     function requestDemo(name) {
         return xhr.get({
-            url : 'gallery/' + name + '.html',
-            handleAs : 'text',
-            error : function(error) {
-                    loadFromGallery(gallery_demos[hello_world_index])
-                        .then(function() {
-                            deferredLoadError = true;
-                        });
+            url: 'gallery/' + name + '.html',
+            handleAs: 'text',
+            error: function(error) {
+                loadFromGallery(gallery_demos[hello_world_index]).then(function() {
+                    deferredLoadError = true;
+                });
             }
         });
     }
@@ -1107,6 +1133,7 @@ require({
             if (defined(queryObject.src)) {
                 if (demo.name === queryObject.src.replace('.html', '')) {
                     loadFromGallery(demo).then(function() {
+                        window.history.replaceState(demo, demo.name, getPushStateUrl(demo));
                         if (defined(queryObject.gist)) {
                             document.title = 'Gist Import - Cesium Sandcastle';
                         } else {
@@ -1191,7 +1218,7 @@ require({
         demoLink.className = 'linkButton';
         demoLink.href = 'gallery/' + encodeURIComponent(demo.name) + '.html';
 
-        if (demo.name === "Hello World") {
+        if (demo.name === 'Hello World') {
             newDemo = demo;
         }
         demoLink.onclick = function(e) {
@@ -1207,13 +1234,9 @@ require({
                 if (confirmChange) {
                     delete queryObject.gist;
                     delete queryObject.code;
-                    history.replaceState(null, document.title, window.location.pathname + window.location.search);
 
+                    window.history.pushState(demo, demo.name, getPushStateUrl(demo));
                     loadFromGallery(demo).then(function() {
-                        var demoSrc = demo.name + '.html';
-                        if (demoSrc !== window.location.search.substring(1)) {
-                            window.history.pushState(demo, demo.name, '?src=' + demoSrc + '&label=' + currentTab);
-                        }
                         document.title = demo.name + ' - Cesium Sandcastle';
                     });
                 }
